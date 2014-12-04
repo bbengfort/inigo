@@ -19,6 +19,8 @@ Implements local file system operations
 
 import os
 import magic
+import base64
+import hashlib
 import mimetypes
 
 from inigo.exceptions import *
@@ -80,16 +82,35 @@ class FileMeta(Node):
     Implements a File object with extended functionality (but doesn't open)
     """
 
-    def __init__(self, path):
+    def __init__(self, path, signature='sha256'):
 
         if not os.path.isfile(path):
             raise NotAFile("The specified path, '%s' is not a file", path)
 
+        if signature not in hashlib.algorithms:
+            raise TypeError('"%s" is not a valid hash algorithm', signature)
+
+        self.sigalg = getattr(hashlib, signature)
         super(FileMeta, self).__init__(path)
 
     @property
     def mimetype(self):
+        """
+        Uses libmagic to guess the mimetype of the file
+        """
         return magic.from_file(self.path, mime=True)
+
+    @property
+    def signature(self):
+        """
+        Computes the b64 encoded sha256 hash of the file
+        """
+        with open(self.path, 'rb') as f:
+            sig = self.sigalg()
+            chk = sig.block_size * 256
+            for chunk in iter(lambda: f.read(chk), b''):
+                sig.update(chunk)
+        return base64.b64encode(sig.digest())
 
     def isfile(self):
         """

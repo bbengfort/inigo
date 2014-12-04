@@ -51,6 +51,7 @@ if __name__ == '__main__':
     for item in dir.list():
         if item.isfile():
             mimetypes[item.mimetype] += 1
+            print "%s: %s" % (item, item.signature)
 
     for item in mimetypes.most_common():
         print "%s: %i" % item
