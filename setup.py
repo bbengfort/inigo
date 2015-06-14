@@ -29,7 +29,12 @@ except ImportError:
 ## Package Information
 ##########################################################################
 
-version  = __import__('inigo').__version__
+# Read the __init__.py file for version info
+version = None
+versfile = os.path.join(os.path.dirname(__file__), "inigo", "__init__.py")
+with open(versfile, 'r') as versf:
+    exec(versf.read(), namespace)
+    version = namespace['get_version']()
 
 ## Discover the packages
 packages = find_packages(where=".", exclude=("tests", "bin", "docs", "fixtures", "register",))

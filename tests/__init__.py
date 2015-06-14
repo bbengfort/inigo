@@ -17,7 +17,14 @@ Tests for the inigo package
 ## Imports
 ##########################################################################
 
+import os
 import unittest
+
+##########################################################################
+## Fixtures
+##########################################################################
+
+EXPECTED_VERSION = "0.1"
 
 ##########################################################################
 ## Initialization Tests
@@ -42,7 +49,21 @@ class InitializationTest(unittest.TestCase):
 
     def test_version(self):
         """
-        Check the version is 1.0.0
+        Check the expected version matches
         """
         import inigo
-        self.assertEqual(inigo.__version__, "1.0.0")
+        self.assertEqual(inigo.__version__, EXPECTED_VERSION)
+
+    def test_version_extract(self):
+        """
+        Test the setup.py method of extracting the version
+        """
+        namespace = {}
+        versfile = os.path.join(
+            os.path.dirname(__file__), "..", "inigo", "__init__.py"
+        )
+
+        with open(versfile, 'r') as versf:
+            exec(versf.read(), namespace)
+
+        self.assertEqual(namespace['get_version'](), EXPECTED_VERSION)
