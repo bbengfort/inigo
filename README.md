@@ -1,13 +1,16 @@
-[![Stories in Ready](https://badge.waffle.io/bbengfort/inigo.png?label=ready&title=Ready)](https://waffle.io/bbengfort/inigo)
 # Inigo
 
-**Tools for dealing with images on disk for archival purposes**
+[![Build Status](https://travis-ci.org/bbengfort/inigo.svg)](https://travis-ci.org/bbengfort/inigo)
+[![Coverage Status](https://coveralls.io/repos/bbengfort/inigo/badge.svg)](https://coveralls.io/r/bbengfort/inigo)
+[![Stories in Ready](https://badge.waffle.io/bbengfort/inigo.png?label=ready&title=Ready)](https://waffle.io/bbengfort/inigo)
 
 [![Saigon, 1969 & now](docs/images/saigon.jpg)](https://flic.kr/p/b1TU4F)
 
+**Tools for dealing with images on disk for archival purposes**
+
 ## About
 
-We have a ton of images in a ton of places, and all of them are vital to share with future generations! Although there are a ton of tools out there for dealing with images, this simple project is meant to aggregate them all in one place, gather important meta data then push them to Amazon S3 or Google Drive for archiving. 
+We have a ton of images in a ton of places, and all of them are vital to share with future generations! Although there are a ton of tools out there for dealing with images, this simple project is meant to aggregate them all in one place, gather important meta data then push them to Amazon S3 or Google Drive for archiving.
 
 ### Contributing
 
