@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/bbengfort/inigo.png?label=ready&title=Ready)](https://waffle.io/bbengfort/inigo)
 # Inigo
 
 **Tools for dealing with images on disk for archival purposes**
