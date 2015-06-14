@@ -1,0 +1,4 @@
+site_name: Inigo Documentation
+pages:
+- [index.md, Home]
+theme: readthedocs

@@ -1,12 +1,8 @@
 # Inigo
 
-**Tools for dealing with images on disk for archival purposes**
-
-[![Saigon, 1969 & now](docs/images/saigon.jpg)](https://flic.kr/p/b1TU4F)
-
 ## About
 
-We have a ton of images in a ton of places, and all of them are vital to share with future generations! Although there are a ton of tools out there for dealing with images, this simple project is meant to aggregate them all in one place, gather important meta data then push them to Amazon S3 or Google Drive for archiving. 
+We have a ton of images in a ton of places, and all of them are vital to share with future generations! Although there are a ton of tools out there for dealing with images, this simple project is meant to aggregate them all in one place, gather important meta data then push them to Amazon S3 or Google Drive for archiving.
 
 ### Contributing
 
@@ -22,7 +18,3 @@ You can contact me on Twitter if needed: [@bbengfort](https://twitter.com/bbengf
 In Greek the meaning of the name Inigo is: Fiery. Famous Bearers: St Ignatius of Antioch, martyred in the 2nd century. St Ignatius of Loyola, who founded the Jesuits in the 15th century. Spanish Meaning: The name Inigo is a Spanish baby name meaning "little love".
 
 Importantly, [Inigo](https://en.wikipedia.org/wiki/Inigo) is also the name of First Dreamer, and since I happened to be reading Peter F. Hamilton at the time of this project - voila, project name!
-
-### Attribution
-
-The image used in this README, [Sài Gòn, năm 1969 & nay](https://flic.kr/p/b1TU4F) by [Khánh Hmoong](https://www.flickr.com/photos/hmoong/), is licensed by [CC BY-NC 2.0](https://creativecommons.org/licenses/by-nc/2.0/).
