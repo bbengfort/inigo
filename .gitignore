@@ -55,3 +55,6 @@ target/
 
 # Fixtures
 fixtures/*
+
+# Local configuration
+conf/inigo.yaml

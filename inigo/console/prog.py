@@ -26,7 +26,7 @@ import traceback
 
 from inigo import get_version
 from inigo.exceptions import ConsoleError
-# from inigo.config import settings
+from inigo.config import settings
 
 ##########################################################################
 ## Helper functions
