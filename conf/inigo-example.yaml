@@ -1,0 +1,22 @@
+##
+## Example configuration file for the Inigo utility
+## Created: Wed Jun 10 15:52:03 2015 -0400
+##
+## Copy this file into one of the following locations, then edit for your
+## specific environment settings, e.g. for production or development.
+##
+## - /etc/inigo.yaml
+## - $HOME/.inigo.yaml
+## - $(pwd)/conf/inigo.yaml
+##
+
+## Set application environment
+debug:   True
+testing: False
+
+## Database Configuration
+database:
+    name: inigo
+    host: localhost
+    port: 5432
+    user: django

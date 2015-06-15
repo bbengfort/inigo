@@ -17,7 +17,7 @@ A debug command for debugging on the commandline
 ## Imports
 ##########################################################################
 
-# from inigo.config import settings
+from inigo.config import settings
 from inigo.console.commands.base import Command
 
 ##########################################################################
