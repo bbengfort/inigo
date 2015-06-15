@@ -3,6 +3,7 @@ Pillow==2.6.1
 python-magic==0.4.6
 
 ## Utilities
+colorama==0.3.3
 python-dateutil==2.3
 six==1.8.0
 

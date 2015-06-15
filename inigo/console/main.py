@@ -25,14 +25,15 @@ import sys
 import colorama
 
 from inigo.console.commands import *
+from inigo.console.utils import color_format
 from inigo.console.prog import ConsoleProgram
 
 ##########################################################################
 ## Command Line Variables
 ##########################################################################
 
-DESCRIPTION = "An administrative utility for the Inigo Project"
-EPILOG      = "For any bugs or concerns, please use issues on Github"
+DESCRIPTION = "Command utility for Inigo project"
+EPILOG      = "Please submit bugs to Github issue tracker"
 COMMANDS    = [
     DebugCommand,
 ]
@@ -43,8 +44,8 @@ COMMANDS    = [
 
 class InigoUtility(ConsoleProgram):
 
-    description = colorama.Fore.CYAN + DESCRIPTION + colorama.Fore.RESET
-    epilog      = colorama.Fore.MAGENTA + EPILOG + colorama.Fore.RESET
+    description = color_format(DESCRIPTION, colorama.Fore.CYAN)
+    epilog      = color_format(EPILOG, colorama.Fore.MAGENTA)
 
     @classmethod
     def load(klass, commands=COMMANDS):
