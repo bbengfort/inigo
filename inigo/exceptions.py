@@ -30,3 +30,9 @@ class NotAFile(InigoException):
     Trying to create a file meta object with a path that doesn't exit
     """
     pass
+
+class ConsoleError(InigoException):
+    """
+    Captured on the command line for user feedback purposes
+    """
+    pass
