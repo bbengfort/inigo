@@ -1,4 +1,4 @@
-# inigo.stats
+# inigo.utils.stats
 # Objects for computing Statistics and probabilities
 #
 # Author:   Benjamin Bengfort <benjamin@bengfort.com>

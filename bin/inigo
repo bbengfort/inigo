@@ -22,8 +22,8 @@ import sys
 import inigo
 import argparse
 
-from inigo.local import *
-from inigo.stats import *
+from inigo.fs import *
+from inigo.utils.stats import *
 
 ##########################################################################
 ## Command Variables

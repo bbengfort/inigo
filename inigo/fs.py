@@ -1,4 +1,4 @@
-# inigo.local
+# inigo.fs
 # Implements local file system operations
 #
 # Author:   Benjamin Bengfort <benjamin@bengfort.com>
@@ -7,7 +7,7 @@
 # Copyright (C) 2014 Bengfort.com
 # For license information, see LICENSE.txt
 #
-# ID: local.py [] benjamin@bengfort.com $
+# ID: fs.py [] benjamin@bengfort.com $
 
 """
 Implements local file system operations
@@ -21,7 +21,6 @@ import os
 import magic
 import base64
 import hashlib
-import mimetypes
 
 from inigo.exceptions import *
 
@@ -43,7 +42,7 @@ def normalize_path(path):
 
 class Node(object):
     """
-    Wraps some os calls around a path.
+    Wraps os calls around a path.
     """
 
     def __init__(self, path):
@@ -79,7 +78,7 @@ class Node(object):
 
 class FileMeta(Node):
     """
-    Implements a File object with extended functionality (but doesn't open)
+    Implements a File object with extended functionality to gather meta data
     """
 
     def __init__(self, path, signature='sha256'):
