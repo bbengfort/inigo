@@ -22,7 +22,7 @@ __version_info__ = {
     'minor': 1,
     'micro': 0,
     'releaselevel': 'final',
-    'serial': 0,
+    'serial': 1,
 }
 
 
