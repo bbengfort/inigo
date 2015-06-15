@@ -38,25 +38,3 @@ from inigo.console import InigoUtility
 if __name__ == '__main__':
     utility = InigoUtility.load()
     utility.execute()
-
-##########################################################################
-## Main Method
-##########################################################################
-
-# if __name__ == '__main__':
-#
-#     parser = argparse.ArgumentParser(description=DESCRIPTION, version=VERSION, epilog=EPILOG)
-#     parser.add_argument('path', nargs=1, type=str, help='Path of directory to evaluate')
-#     parser.add_argument('-R', dest='recursive', action='store_true', help='Recursively evaluate directory')
-#     parser.add_argument('-d', '--depth', type=int, default=None, help='Maximum depth of recursion')
-#
-#     args = parser.parse_args()
-#     dir  = Directory(args.path[0], args.recursive, args.depth)
-#
-#     mimetypes = FreqDist()
-#     for item in dir.list():
-#         if item.isfile():
-#             mimetypes[item.mimetype] += 1
-#
-#     for item in mimetypes.most_common():
-#         print "%s: %i" % item

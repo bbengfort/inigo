@@ -36,6 +36,7 @@ DESCRIPTION = "Command utility for Inigo project"
 EPILOG      = "Please submit bugs to Github issue tracker"
 COMMANDS    = [
     DebugCommand,
+    IdentifyTypesCommand,
 ]
 
 ##########################################################################

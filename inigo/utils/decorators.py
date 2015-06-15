@@ -29,7 +29,7 @@ def timeit(func):
     """
     Returns the number of seconds that a function took along with the result
     """
-    @wraps
+    @wraps(func)
     def timer(*args, **kwargs):
         start  = time.time()
         result = func(*args, **kwargs)
