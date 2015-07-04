@@ -21,7 +21,7 @@ import colorama
 
 from inigo.fs import Directory
 from inigo.utils.stats import FreqDist
-from inigo.utils.decorators import timeit
+from inigo.utils.decorators import Timer
 from inigo.console.utils import color_format
 from inigo.console.commands.base import Command
 
@@ -53,7 +53,6 @@ class IdentifyTypesCommand(Command):
         }
     }
 
-    @timeit
     def walk_directory(self, path, recursive, depth):
         """
         Returns a frequency distribution of mimetypes in a directory.
@@ -64,20 +63,27 @@ class IdentifyTypesCommand(Command):
         mimetypes = FreqDist()
         for item in dir.list():
             if item.isfile():
-                mimetypes[item.mimetype] += 1
+                try:
+                    mimetypes[item.mimetype] += 1
+                except Exception as e:
+                    print color_format(
+                        "Exception at {}: {}",
+                        colorama.Style.BRIGHT + colorama.Fore.RED,
+                        item.path, e
+                    )
 
         return mimetypes
 
     def handle(self, args):
 
-        mimetypes, elapsed = self.walk_directory(args.path[0], args.recursive, args.depth)
+        with Timer() as timer:
+            mimetypes = self.walk_directory(args.path[0], args.recursive, args.depth)
 
-        output = [color_format("Mimetypes discovered in {}", colorama.Fore.WHITE, args.path[0])]
-        for key, val in mimetypes.most_common():
-            frequency = color_format("{: >6}", colorama.Fore.CYAN, val)
-            mimetype  = color_format("{}", colorama.Fore.WHITE, key)
-            output.append("  {} {}".format(frequency, mimetype))
+            output = [color_format("Mimetypes discovered in {}", colorama.Fore.WHITE, args.path[0])]
+            for key, val in mimetypes.most_common():
+                frequency = color_format("{: >6}", colorama.Fore.CYAN, val)
+                mimetype  = color_format("{}", colorama.Fore.WHITE, key)
+                output.append("  {} {}".format(frequency, mimetype))
 
-        output.append(color_format("Discovery took {:0.3f} seconds", colorama.Fore.MAGENTA, elapsed))
-
+        output.append(color_format("Discovery took {}", colorama.Fore.MAGENTA, timer))
         return "\n".join(output)

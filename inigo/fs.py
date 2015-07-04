@@ -58,13 +58,33 @@ class Node(object):
         """
         Checks if this is a File
         """
-        return self.__class__.__name__ == 'FileMeta'
+        return os.path.isfile(self.path)
 
     def isdir(self):
         """
         Checks if this is a Directory
         """
-        return self.__class__.__name__ == 'Directory'
+        return os.path.isdir(self.path)
+
+    def isimage(self):
+        """
+        Checks if this is an Image
+        """
+        if self.isfile:
+            meta = FileMeta(self.path)
+            if meta.mimetype.startswith('image'):
+                return True
+        return False
+
+    def convert(self):
+        """
+        Converts the node into the appropriate subclass
+        """
+        if self.isdir():
+            return Directory(self.path)
+
+        if self.isfile():
+            return FileMeta(self.path)
 
     def __str__(self):
         return self.path
@@ -111,12 +131,6 @@ class FileMeta(Node):
                 sig.update(chunk)
         return base64.b64encode(sig.digest())
 
-    def isfile(self):
-        """
-        Checks if this is a File
-        """
-        return True
-
 ##########################################################################
 ## Directory
 ##########################################################################
@@ -138,12 +152,6 @@ class Directory(Node):
         self.recursive = recursive
         self.maxdepth  = maxdepth
         super(Directory, self).__init__(path)
-
-    def isdir(self):
-        """
-        Checks if this is a Directory
-        """
-        return True
 
     def list(self):
         """
