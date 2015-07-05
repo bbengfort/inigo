@@ -21,7 +21,7 @@ from inigo.fs import FileMeta
 from PIL import Image, ExifTags
 
 from datetime import datetime
-from inigo.utils.decorators import cached_property
+from inigo.utils.decorators import memoized
 
 ##########################################################################
 ## Module Constants
@@ -38,7 +38,7 @@ class ImageMeta(FileMeta):
     Wraps a path and provides image meta data.
     """
 
-    @cached_property
+    @memoized
     def exif(self):
         """
         Uses Pillow to extract the EXIF data
