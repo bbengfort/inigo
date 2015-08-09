@@ -23,6 +23,7 @@ import base64
 import hashlib
 
 from inigo.exceptions import *
+from inigo.utils.decorators import memoized
 
 ##########################################################################
 ## Helper Methods
@@ -70,7 +71,7 @@ class Node(object):
         """
         Checks if this is an Image
         """
-        if self.isfile:
+        if self.isfile():
             meta = FileMeta(self.path)
             if meta.mimetype.startswith('image'):
                 return True
@@ -112,14 +113,21 @@ class FileMeta(Node):
         self.sigalg = getattr(hashlib, signature)
         super(FileMeta, self).__init__(path)
 
-    @property
+    @memoized
     def mimetype(self):
         """
         Uses libmagic to guess the mimetype of the file
         """
         return magic.from_file(self.path, mime=True)
 
-    @property
+    @memoized
+    def filesize(self):
+        """
+        Uses stat to return the size of the file in bytes.
+        """
+        return self.stat().st_size
+
+    @memoized
     def signature(self):
         """
         Computes the b64 encoded sha256 hash of the file
@@ -180,3 +188,6 @@ class Directory(Node):
         for name, dirs, files in os.walk(self.path):
             depth = name.count(os.sep) - startdepth
             yield name, dirs, files, depth
+
+    def __len__(self):
+        return len(list(self.list()))
