@@ -63,6 +63,9 @@ class Picture(Base):
     date_taken    = Column(DateTime(timezone=True))
     latitude      = Column(Float)
     longitude     = Column(Float)
+    width         = Column(Integer)
+    height        = Column(Integer)
+    mimetype      = Column(Unicode(64))
     description   = Column(UnicodeText)
 
 ##########################################################################
