@@ -37,6 +37,7 @@ EPILOG      = "Please submit bugs to Github issue tracker"
 COMMANDS    = [
     DebugCommand,
     IdentifyTypesCommand,
+    BackupCommand,
 ]
 
 ##########################################################################
