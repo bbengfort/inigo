@@ -21,7 +21,9 @@ import os
 import magic
 import base64
 import hashlib
+import socket
 
+from urlparse import urljoin
 from inigo.exceptions import *
 from inigo.utils.decorators import memoized
 
@@ -48,6 +50,20 @@ class Node(object):
 
     def __init__(self, path):
         self.path = normalize_path(path)
+
+    @property
+    def hostname(self):
+        """
+        Returns the hostname and access protocol of the node.
+        """
+        return "file://{}".format(socket.gethostname())
+
+    @property
+    def uri(self):
+        """
+        Returns the uniform resource identifier of the node.
+        """
+        return urljoin(self.hostname, self.path)
 
     def stat(self):
         """
@@ -91,7 +107,7 @@ class Node(object):
         return self.path
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self.path)
+        return "<%s: %s>" % (self.__class__.__name__, self.uri)
 
 ##########################################################################
 ## File
@@ -103,15 +119,16 @@ class FileMeta(Node):
     """
 
     def __init__(self, path, signature='sha256'):
+        super(FileMeta, self).__init__(path)
 
-        if not os.path.isfile(path):
-            raise NotAFile("The specified path, '%s' is not a file", path)
+        if not os.path.isfile(self.path):
+            raise NotAFile("The specified path, '%s' is not a file", self.path)
 
         if signature not in hashlib.algorithms:
             raise TypeError('"%s" is not a valid hash algorithm', signature)
 
         self.sigalg = getattr(hashlib, signature)
-        super(FileMeta, self).__init__(path)
+
 
     @memoized
     def mimetype(self):
@@ -137,7 +154,7 @@ class FileMeta(Node):
             chk = sig.block_size * 256
             for chunk in iter(lambda: f.read(chk), b''):
                 sig.update(chunk)
-        return base64.b64encode(sig.digest())
+        return unicode(base64.b64encode(sig.digest()))
 
 ##########################################################################
 ## Directory

@@ -66,6 +66,7 @@ class Picture(Base):
     width         = Column(Integer)
     height        = Column(Integer)
     mimetype      = Column(Unicode(64))
+    bytes         = Column(Integer)
     description   = Column(UnicodeText)
 
 ##########################################################################
