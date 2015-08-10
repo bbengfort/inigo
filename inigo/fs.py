@@ -21,8 +21,11 @@ import os
 import magic
 import base64
 import hashlib
+import socket
 
+from urlparse import urljoin
 from inigo.exceptions import *
+from inigo.utils.decorators import memoized
 
 ##########################################################################
 ## Helper Methods
@@ -48,6 +51,20 @@ class Node(object):
     def __init__(self, path):
         self.path = normalize_path(path)
 
+    @property
+    def hostname(self):
+        """
+        Returns the hostname and access protocol of the node.
+        """
+        return "file://{}".format(socket.gethostname())
+
+    @property
+    def uri(self):
+        """
+        Returns the uniform resource identifier of the node.
+        """
+        return urljoin(self.hostname, self.path)
+
     def stat(self):
         """
         Call os.stat on the path
@@ -70,7 +87,7 @@ class Node(object):
         """
         Checks if this is an Image
         """
-        if self.isfile:
+        if self.isfile():
             meta = FileMeta(self.path)
             if meta.mimetype.startswith('image'):
                 return True
@@ -90,7 +107,7 @@ class Node(object):
         return self.path
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self.path)
+        return "<%s: %s>" % (self.__class__.__name__, self.uri)
 
 ##########################################################################
 ## File
@@ -102,24 +119,32 @@ class FileMeta(Node):
     """
 
     def __init__(self, path, signature='sha256'):
+        super(FileMeta, self).__init__(path)
 
-        if not os.path.isfile(path):
-            raise NotAFile("The specified path, '%s' is not a file", path)
+        if not os.path.isfile(self.path):
+            raise NotAFile("The specified path, '%s' is not a file", self.path)
 
         if signature not in hashlib.algorithms:
             raise TypeError('"%s" is not a valid hash algorithm', signature)
 
         self.sigalg = getattr(hashlib, signature)
-        super(FileMeta, self).__init__(path)
 
-    @property
+
+    @memoized
     def mimetype(self):
         """
         Uses libmagic to guess the mimetype of the file
         """
         return magic.from_file(self.path, mime=True)
 
-    @property
+    @memoized
+    def filesize(self):
+        """
+        Uses stat to return the size of the file in bytes.
+        """
+        return self.stat().st_size
+
+    @memoized
     def signature(self):
         """
         Computes the b64 encoded sha256 hash of the file
@@ -129,7 +154,7 @@ class FileMeta(Node):
             chk = sig.block_size * 256
             for chunk in iter(lambda: f.read(chk), b''):
                 sig.update(chunk)
-        return base64.b64encode(sig.digest())
+        return unicode(base64.b64encode(sig.digest()))
 
 ##########################################################################
 ## Directory
@@ -180,3 +205,6 @@ class Directory(Node):
         for name, dirs, files in os.walk(self.path):
             depth = name.count(os.sep) - startdepth
             yield name, dirs, files, depth
+
+    def __len__(self):
+        return len(list(self.list()))

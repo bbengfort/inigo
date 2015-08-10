@@ -40,6 +40,16 @@ class PostgreSQLConfiguration(Configuration):
     user = environ_setting("PGUSER", "django")
     password = environ_setting("PGPASSWORD", "", required=False)
 
+    @property
+    def url(self):
+        """
+        Returns the SQLAlchemy connection URL
+        """
+        return "postgres://{user}:{pass}@{host}:{port}/{name}".format(**{
+            'host': self.host, 'port': self.port,
+            'name': self.name, 'user': self.user, 'pass': self.password
+        })
+
 ##########################################################################
 ## Application Configuration
 ##########################################################################

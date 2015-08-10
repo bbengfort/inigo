@@ -21,13 +21,35 @@ from inigo.fs import FileMeta
 from PIL import Image, ExifTags
 
 from datetime import datetime
-from inigo.utils.decorators import cached_property
+from dateutil.tz import tzutc
+
+from inigo.utils.timez import epochptime
+from inigo.utils.decorators import memoized
+from inigo.models import Picture, Storage, create_session
+
+from sqlalchemy.sql import exists
 
 ##########################################################################
 ## Module Constants
 ##########################################################################
 
 EXIF_DATE_FORMAT = "%Y:%m:%d %H:%M:%S"
+
+##########################################################################
+## Helper functions
+##########################################################################
+
+def convert_to_degrees(value):
+    """
+    Helper function to convert GPS coordinates stored in EXIF degrees to a
+    decimal float format, though this function does not take into account
+    N/S or E/W cardinality of the degree vector.
+    """
+    deg = float(value[0][0]) / float(value[0][1])
+    mns = float(value[1][0]) / float(value[1][1])
+    sec = float(value[2][0]) / float(value[2][1])
+
+    return deg + (mns / 60.0) + (sec / 3600.0)
 
 ##########################################################################
 ## Image Node
@@ -38,20 +60,25 @@ class ImageMeta(FileMeta):
     Wraps a path and provides image meta data.
     """
 
-    @cached_property
+    @property
     def exif(self):
         """
         Uses Pillow to extract the EXIF data
         """
-        with Image.open(self.path) as img:
-            return {
-                ExifTags.TAGS[k]: v
-                for k,v in img._getexif().items()
-                if k in ExifTags.TAGS
-            }
-            return img._getexif()
+        if not hasattr(self, '_exif'):
+            self.read_image_data()
+        return self._exif
 
     @property
+    def dimensions(self):
+        """
+        Returns a tuple of the width and height of the image.
+        """
+        if not hasattr(self, '_dimensions'):
+            self.read_image_data()
+        return self._dimensions
+
+    @memoized
     def date_taken(self):
         """
         Attempts to find the date taken. Returns any timestamp, even if it is
@@ -60,7 +87,93 @@ class ImageMeta(FileMeta):
             1. Attempt to parse DateTimeOriginal from EXIF
             2. Return st_ctime from os.stat
         """
-        return datetime.strptime(self.exif['DateTimeOriginal'], EXIF_DATE_FORMAT)
+        dtorig = self.exif.get('DateTimeOriginal', None)
+        if dtorig:
+            return datetime.strptime(dtorig, EXIF_DATE_FORMAT).replace(tzinfo=tzutc())
+
+        return epochptime(self.stat().st_ctime)
+
+    @memoized
+    def coordinates(self):
+        """
+        Returns the latitude and longitude as a tuple.
+        """
+        lat = lon = None
+
+        # Decode the GPSInfo tags
+        if "GPSInfo" in self.exif:
+            self.exif["GPSInfo"] = {
+                ExifTags.GPSTAGS[k]: v
+                for k,v in self.exif["GPSInfo"].iteritems()
+                if k in ExifTags.GPSTAGS
+            }
+
+            # Gather GPS data points
+            gps_info = self.exif["GPSInfo"]
+            gps_lat  = gps_info.get("GPSLatitude", None)
+            gps_lon  = gps_info.get("GPSLongitude", None)
+            gps_lat_ref = gps_info.get("GPSLatitudeRef", None)
+            gps_lon_ref = gps_info.get("GPSLongitudeRef", None)
+
+            # Perform GPS conversions
+            if gps_lat and gps_lon and gps_lat_ref and gps_lon_ref:
+                lat = convert_to_degrees(gps_lat)
+                if gps_lat_ref != "N":
+                    lat = 0 - lat
+
+                lon = convert_to_degrees(gps_lon)
+                if gps_lon_ref != "E":
+                    lon = 0 - lon
+
+        return (lat, lon)
+
+    def read_image_data(self):
+        """
+        Reads the image data and returns specific information.
+        """
+
+        with Image.open(self.path) as img:
+            # Read size data
+            self._dimensions = img.size
+
+            # Read EXIF data
+            exifdata = img._getexif() if hasattr(img, "_getexif") else {}
+
+            self._exif = {
+                ExifTags.TAGS[k]: v
+                for k,v in exifdata.iteritems()
+                if k in ExifTags.TAGS
+            } if exifdata else {}
+
+    def save(self, session=None, commit=False):
+        """
+        Stores the image information in the database along with the current
+        file path. Pass a session object in to use the same session for
+        multiple saves.
+
+        This method returns the session object. Will commit if required.
+        """
+        session  = session or create_session()
+
+        if not session.query(exists().where(
+                Picture.signature == self.signature
+            )).scalar():
+
+            session.add(Picture(
+                signature     = self.signature,
+                date_taken    = self.date_taken,
+                latitude      = self.coordinates[0],
+                longitude     = self.coordinates[1],
+                width         = self.dimensions[0],
+                height        = self.dimensions[1],
+                mimetype      = unicode(self.mimetype),
+                bytes         = self.filesize,
+            ))
+
+            if commit:
+                session.commit()
+
+        return session
 
 
 if __name__ == '__main__':
@@ -68,3 +181,4 @@ if __name__ == '__main__':
     from inigo.config import PROJECT
     img = ImageMeta(os.path.join(PROJECT, "fixtures/animals/land/cats/cat.jpg"))
     print img.date_taken
+    print img.dimensions
