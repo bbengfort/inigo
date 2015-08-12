@@ -20,6 +20,8 @@ Utilities for determining localhost information.
 import socket
 import getpass
 
+LOCAL_TLD = ".local"
+
 ##########################################################################
 ## Helper Functions
 ##########################################################################
@@ -28,7 +30,10 @@ def hostname():
     """
     Returns the unicode encoded hostname of the local machine
     """
-    return unicode(socket.gethostname())
+    host = unicode(socket.gethostname())
+    if u"." not in host:
+        host += LOCAL_TLD
+    return host
 
 
 def username():

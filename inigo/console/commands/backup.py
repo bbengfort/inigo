@@ -23,7 +23,8 @@ import colorama
 from inigo.image import ImageMeta
 from inigo.fs import Node, Directory
 from inigo.models import create_session
-from inigo.models import Picture
+from inigo.models import Picture, STYPE
+from inigo.models import BackupTask
 
 from inigo.config import settings
 from inigo.utils.decorators import Timer
@@ -103,26 +104,39 @@ class BackupCommand(Command):
         duplicatated or has already backed up the file. No matter what,
         database records should be maintained and updated.
         """
-        img = ImageMeta(fm.path)
+        imgsrc  = ImageMeta(fm.path)
 
         # Save the image metadata to the database
-        session = img.save(session)
-        picture = session.query(Picture).filter(Picture.signature==img.signature).one()
+        session = imgsrc.save(session)
+        session = imgsrc.save_storage(session)
+        picture = session.query(Picture).filter(Picture.signature==imgsrc.signature).one()
 
         # Figure out backup path on disk
         dstpath = os.path.join(self.backupto, picture.get_relative_backup_path())
         if not os.path.exists(dstpath):
-            return img.copy(dstpath)
+            imgdst = imgsrc.copy(dstpath)
+
+            # Save the storages metadata to disk
+            # NOTE: This methodology defaults to Drobo - need to fix.
+            hostname = unicode(imgdst.hostname.replace("file://", "drobo://"))
+            filepath = unicode(os.path.join("/", settings.drobo.root, picture.get_relative_backup_path()))
+            session  = imgdst.save_storage(session, hostname=hostname, filepath=filepath, stype=STYPE.DROBO)
+
+            return imgdst
 
         return None
 
     def handle(self, args):
-        self.backupto = settings.backupto
-        if not self.backupto:
-            raise ValueError("No backup root location set in configuration!")
+        self.backupto = settings.drobo.get_drobo_path()
 
         with Timer() as timer:
             count, duplicates, errors = self.backup(args.path[0], args.recursive, args.depth)
+            backups = count - errors - duplicates
 
-        success = count - errors - duplicates
-        return color_format("Backed up {} of {} images in {}", colorama.Fore.MAGENTA, success, count, timer)
+        # Save log of geocoding
+        log = BackupTask(backups=backups, duplicates=duplicates, errors=errors, elapsed=timer.interval)
+        session = create_session()
+        session.add(log)
+        session.commit()
+
+        return color_format(str(log), colorama.Fore.MAGENTA)

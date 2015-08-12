@@ -25,7 +25,7 @@ from inigo.models import Picture, create_session
 from inigo.models import GeocodeTask
 from inigo.console.commands.base import Command
 from inigo.console.utils import color_format
-from inigo.utils.timez import humanizedelta, today
+from inigo.utils.timez import humanizedelta, today, tzaware_now
 from inigo.utils.decorators import Timer
 
 from geopy.geocoders import GoogleV3
@@ -191,4 +191,5 @@ class GeocodeCommand(Command):
         result   = self.geocoder.reverse(query, exactly_one=True, sensor=False)
 
         record.location = unicode(result.address) if result else u""
+        record.modified = tzaware_now()
         self.session.add(record)
