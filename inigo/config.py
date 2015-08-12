@@ -54,6 +54,8 @@ class PostgreSQLConfiguration(Configuration):
 class GeocodingConfiguration(Configuration):
 
     apikey = environ_setting("GOOGLE_CLIENT_KEY", "")
+    call_limit = 2500
+    call_rate  = 5
 
 ##########################################################################
 ## Application Configuration

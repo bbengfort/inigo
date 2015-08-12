@@ -22,5 +22,7 @@ database:
     user: django
 
 ## Geocoding Configuration
-# geocode:
+geocode:
     # apikey: $GOOGLE_CLIENT_KEY
+    call_limit: 2500 # Maximum number of requests per day
+    call_rate: 5     # Maximum number of requests per second

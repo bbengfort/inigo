@@ -25,6 +25,8 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 from inigo.config import settings
+from inigo.utils.timez import tzaware_now, humanizedelta
+from inigo.utils.uname import hostname, username
 
 ##########################################################################
 ## Module Constants
@@ -33,7 +35,7 @@ from inigo.config import settings
 Base = declarative_base()  # SQLAlchemy declarative extension
 
 ##########################################################################
-## Models
+## Models for Image Meta Data
 ##########################################################################
 
 class Storage(Base):
@@ -51,6 +53,7 @@ class Storage(Base):
     picture_id    = Column(Integer, ForeignKey('pictures.id'), nullable=False)
     picture       = relationship('Picture', backref='storages')
 
+
 class Picture(Base):
     """
     Contains meta information about a photograph discovered in the backup.
@@ -63,11 +66,39 @@ class Picture(Base):
     date_taken    = Column(DateTime(timezone=True))
     latitude      = Column(Float)
     longitude     = Column(Float)
+    location      = Column(Unicode(255))
     width         = Column(Integer)
     height        = Column(Integer)
     mimetype      = Column(Unicode(64))
     bytes         = Column(Integer)
     description   = Column(UnicodeText)
+
+
+##########################################################################
+## Models for tasks and logging
+##########################################################################
+
+
+class GeocodeTask(Base):
+    """
+    Contains meta information about geocoding jobs on the database.
+    """
+
+    __tablename__ = "geocode_log"
+
+    id            = Column(Integer, primary_key=True)
+    timestamp     = Column(DateTime(timezone=True), default=tzaware_now)
+    user          = Column(Unicode(64), default=username)
+    host          = Column(Unicode(64), default=hostname)
+    requests      = Column(Integer, default=0)
+    errors        = Column(Integer, default=0)
+    elapsed       = Column(Float, default=0.0)
+
+    def __str__(self):
+        return "Made {} geocode API requests with {} errors in {}".format(
+            self.requests, self.errors, humanizedelta(seconds=self.elapsed)
+        )
+
 
 ##########################################################################
 ## Database helper methods

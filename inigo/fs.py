@@ -21,11 +21,11 @@ import os
 import magic
 import base64
 import hashlib
-import socket
 
 from urlparse import urljoin
 from inigo.exceptions import *
 from inigo.utils.decorators import memoized
+from inigo.utils.uname import hostname
 
 ##########################################################################
 ## Helper Methods
@@ -56,7 +56,7 @@ class Node(object):
         """
         Returns the hostname and access protocol of the node.
         """
-        return "file://{}".format(socket.gethostname())
+        return "file://{}".format(hostname())
 
     @property
     def uri(self):
