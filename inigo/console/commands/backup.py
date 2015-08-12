@@ -17,12 +17,15 @@ Runs the evaluation backup to a set of files to Drobo and save meta to db.
 ## Imports
 ##########################################################################
 
+import os
 import colorama
 
 from inigo.image import ImageMeta
 from inigo.fs import Node, Directory
 from inigo.models import create_session
+from inigo.models import Picture
 
+from inigo.config import settings
 from inigo.utils.decorators import Timer
 from inigo.console.utils import color_format
 from inigo.console.commands.base import Command
@@ -70,12 +73,15 @@ class BackupCommand(Command):
         # Walk directory at recursion and depth
         count  = 0
         errors = 0
+        duplicates = 0
         folder = Directory(path, recursive, depth)
         for idx, item in enumerate(folder.list()):
             if item.isimage():
                 count += 1
                 try:
-                    self.backup_image(item, session)
+                    result = self.backup_image(item, session)
+                    if not result:
+                        duplicates += 1
                 except Exception as e:
                     print color_format(
                         "Exception at {}: {}",
@@ -88,21 +94,35 @@ class BackupCommand(Command):
                 session.commit()
 
         session.commit()
-        return count, errors
+        return count, duplicates, errors
 
     def backup_image(self, fm, session=None):
         """
-        Handles an individual image backup
+        Handles an individual image backup.
+        Returns new meta if it moved the file to the backup location, None if
+        duplicatated or has already backed up the file. No matter what,
+        database records should be maintained and updated.
         """
         img = ImageMeta(fm.path)
 
-        # TODO: move the File
-        img.save(session)
+        # Save the image metadata to the database
+        session = img.save(session)
+        picture = session.query(Picture).filter(Picture.signature==img.signature).one()
+
+        # Figure out backup path on disk
+        dstpath = os.path.join(self.backupto, picture.get_relative_backup_path())
+        if not os.path.exists(dstpath):
+            return img.copy(dstpath)
+
+        return None
 
     def handle(self, args):
+        self.backupto = settings.backupto
+        if not self.backupto:
+            raise ValueError("No backup root location set in configuration!")
 
         with Timer() as timer:
-            count, errors = self.backup(args.path[0], args.recursive, args.depth)
+            count, duplicates, errors = self.backup(args.path[0], args.recursive, args.depth)
 
-        success = count - errors
+        success = count - errors - duplicates
         return color_format("Backed up {} of {} images in {}", colorama.Fore.MAGENTA, success, count, timer)

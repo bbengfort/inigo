@@ -13,6 +13,7 @@
 ## Set application environment
 debug:   True
 testing: False
+# backupto: # Set root directory to backup files to.
 
 ## Database Configuration
 database:

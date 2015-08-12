@@ -66,6 +66,13 @@ class Node(object):
         """
         return urljoin(self.hostname, self.path)
 
+    @property
+    def directory(self):
+        """
+        Returns the parent directory of the node.
+        """
+        return Directory(os.path.dirname(self.path))
+
     def stat(self):
         """
         Call os.stat on the path
@@ -77,6 +84,10 @@ class Node(object):
         Copy this node from it's current location to the destination.
         Returns a new Node for the destination object.
         """
+        directory = os.path.dirname(dst)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         shutil.copy(self.path, dst)
         shutil.copystat(self.path, dst)
         return self.__class__(dst)
@@ -86,6 +97,10 @@ class Node(object):
         Move this node from it's current location to the destination.
         Returns a new Node for the destination object.
         """
+        directory = os.path.dirname(dst)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         shutil.move(self.path, dst)
         return self.__class__(dst)
 
@@ -148,6 +163,16 @@ class FileMeta(Node):
     Implements a File object with extended functionality to gather meta data
     """
 
+    @classmethod
+    def touch(cls, path, times=None, **kwargs):
+        """
+        Creates an empty file at the specified path.
+        """
+        with open(path, 'a') as f:
+            os.utime(path, times)
+
+        return cls(path, **kwargs)
+
     def __init__(self, path, signature='sha256'):
         super(FileMeta, self).__init__(path)
 
@@ -158,7 +183,6 @@ class FileMeta(Node):
             raise TypeError('"%s" is not a valid hash algorithm', signature)
 
         self.sigalg = getattr(hashlib, signature)
-
 
     @memoized
     def mimetype(self):
@@ -195,18 +219,28 @@ class Directory(Node):
     Implements a Directory object with extended functionality
     """
 
+    @classmethod
+    def create(cls, path, **kwargs):
+        """
+        Creates a directory along with all parent directories.
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return cls(path, **kwargs)
+
     def __init__(self, path, recursive=False, maxdepth=None):
         """
         Instantiate a directory with a path. Recursive means that listing
         the directory will walk the tree from the directory root.
         """
+        super(Directory, self).__init__(path)
 
-        if not os.path.isdir(path):
-            raise NotADirectory("The specified path, '%s' is not a directory", path)
+        if not os.path.isdir(self.path):
+            raise NotADirectory("The specified path, '%s' is not a directory", self.path)
 
         self.recursive = recursive
         self.maxdepth  = maxdepth
-        super(Directory, self).__init__(path)
+
 
     def list(self):
         """
