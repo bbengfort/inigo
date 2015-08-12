@@ -88,6 +88,7 @@ class Picture(Base):
     bytes         = Column(Integer)
     description   = Column(UnicodeText)
     created       = Column(DateTime(timezone=True), default=tzaware_now)
+    modified      = Column(DateTime(timezone=True), default=tzaware_now)
 
     @property
     def extension(self):
