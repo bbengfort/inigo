@@ -20,6 +20,7 @@ Implements local file system operations
 import os
 import magic
 import base64
+import shutil
 import hashlib
 
 from urlparse import urljoin
@@ -70,6 +71,35 @@ class Node(object):
         Call os.stat on the path
         """
         return os.stat(self.path)
+
+    def copy(self, dst):
+        """
+        Copy this node from it's current location to the destination.
+        Returns a new Node for the destination object.
+        """
+        shutil.copy(self.path, dst)
+        shutil.copystat(self.path, dst)
+        return self.__class__(dst)
+
+    def move(self, dst):
+        """
+        Move this node from it's current location to the destination.
+        Returns a new Node for the destination object.
+        """
+        shutil.move(self.path, dst)
+        return self.__class__(dst)
+
+    def remove(self):
+        """
+        Deletes the path from disk.
+        """
+        os.remove(self.path)
+
+    def exists(self):
+        """
+        Check if the file exists on disk
+        """
+        return os.path.exists(self.path)
 
     def isfile(self):
         """
@@ -205,6 +235,24 @@ class Directory(Node):
         for name, dirs, files in os.walk(self.path):
             depth = name.count(os.sep) - startdepth
             yield name, dirs, files, depth
+
+    def copy(self, dst):
+        """
+        Copy this node from it's current location to the destination.
+        Returns a new Node for the destination object.
+        """
+        shutil.copytree(self.path, dst)
+        return self.__class__(dst)
+
+    def remove(self, force=False):
+        """
+        Deletes the path from disk. If force is true, then uses rmtree.
+        """
+        if force:
+            shutil.rmtree(self.path)
+            return
+
+        os.rmdir(self.path)
 
     def __len__(self):
         return len(list(self.list()))
