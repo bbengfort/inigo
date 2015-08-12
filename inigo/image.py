@@ -23,11 +23,14 @@ from PIL import Image, ExifTags
 from datetime import datetime
 from dateutil.tz import tzutc
 
+from inigo.config import settings
 from inigo.utils.timez import epochptime
 from inigo.utils.decorators import memoized
 from inigo.models import Picture, Storage, create_session
 
 from sqlalchemy.sql import exists
+
+from geopy.geocoders import GoogleV3
 
 ##########################################################################
 ## Module Constants
@@ -125,7 +128,22 @@ class ImageMeta(FileMeta):
                 if gps_lon_ref != "E":
                     lon = 0 - lon
 
-        return (lat, lon)
+            return (lat, lon)
+
+    @memoized
+    def address(self):
+        """
+        Reverses the address from the coordinates
+        """
+        if not self.coordinates:
+            return
+
+        geocoder = GoogleV3(api_key=settings.geocode.apikey)
+        query    = "{},{}".format(*self.coordinates)
+        result   = geocoder.reverse(query, exactly_one=True, sensor=False)
+
+        if result:
+            return result.address
 
     def read_image_data(self):
         """

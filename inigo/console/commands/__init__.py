@@ -21,3 +21,4 @@ A module containing all the Inigo commands
 from .debug import DebugCommand
 from .discover import IdentifyTypesCommand
 from .backup import BackupCommand
+from .geocode import GeocodeCommand

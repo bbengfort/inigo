@@ -60,12 +60,21 @@ def strptimez(dtstr, dtfmt):
     return utctsp.replace(tzinfo=tzutc())
 
 
-def today():
+def today(tzinfo=tzlocal()):
     """
     Returns a datetime for today with hours, minutes, and microseconds
     replaced to zero values (e.g. midnight).
     """
-    return datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    return dt.replace(tzinfo=tzinfo)
+
+
+def tzaware_now(tzinfo=tzlocal()):
+    """
+    Returns a timezone aware datetime object, where by default the timezone
+    is set using tzlocal from the dateutil module.
+    """
+    return datetime.now().replace(tzinfo=tzinfo)
 
 
 def epochftime(dt):

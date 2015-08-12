@@ -38,6 +38,7 @@ COMMANDS    = [
     DebugCommand,
     IdentifyTypesCommand,
     BackupCommand,
+    GeocodeCommand,
 ]
 
 ##########################################################################
