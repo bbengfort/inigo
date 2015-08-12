@@ -126,6 +126,31 @@ class Picture(Base):
 ## Models for tasks and logging
 ##########################################################################
 
+class BackupTask(Base):
+    """
+    Contains meta information baout backup jobs on the database.
+    """
+
+    __tablename__ = "backup_log"
+
+    id            = Column(Integer, primary_key=True)
+    timestamp     = Column(DateTime(timezone=True), default=tzaware_now)
+    user          = Column(Unicode(64), default=username)
+    host          = Column(Unicode(64), default=hostname)
+    backups       = Column(Integer, default=0)
+    duplicates    = Column(Integer, default=0)
+    errors        = Column(Integer, default=0)
+    elapsed       = Column(Float, default=0.0)
+
+    @property
+    def files_seen(self):
+        return self.backups + self.duplicates + self.errors
+
+    def __str__(self):
+        return "Backed up {} of {} images ({} errors) in {}".format(
+            self.backups, self.files_seen, self.errors, humanizedelta(seconds=self.elapsed)
+        )
+
 
 class GeocodeTask(Base):
     """

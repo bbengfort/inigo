@@ -24,6 +24,7 @@ from inigo.image import ImageMeta
 from inigo.fs import Node, Directory
 from inigo.models import create_session
 from inigo.models import Picture, STYPE
+from inigo.models import BackupTask
 
 from inigo.config import settings
 from inigo.utils.decorators import Timer
@@ -130,6 +131,12 @@ class BackupCommand(Command):
 
         with Timer() as timer:
             count, duplicates, errors = self.backup(args.path[0], args.recursive, args.depth)
+            backups = count - errors - duplicates
 
-        success = count - errors - duplicates
-        return color_format("Backed up {} of {} images in {}", colorama.Fore.MAGENTA, success, count, timer)
+        # Save log of geocoding
+        log = BackupTask(backups=backups, duplicates=duplicates, errors=errors, elapsed=timer.interval)
+        session = create_session()
+        session.add(log)
+        session.commit()
+
+        return color_format(str(log), colorama.Fore.MAGENTA)
