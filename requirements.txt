@@ -8,6 +8,7 @@ MarkupSafe==0.23
 ## Image management
 Pillow==2.6.1
 python-magic==0.4.6
+geopy==1.10.0
 
 ## Utilities
 confire==0.2.0

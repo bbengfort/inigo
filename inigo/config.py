@@ -50,6 +50,11 @@ class PostgreSQLConfiguration(Configuration):
             'name': self.name, 'user': self.user, 'pass': self.password
         })
 
+
+class GeocodingConfiguration(Configuration):
+
+    apikey = environ_setting("GOOGLE_CLIENT_KEY", "")
+
 ##########################################################################
 ## Application Configuration
 ##########################################################################
@@ -64,6 +69,7 @@ class InigoConfiguration(Configuration):
 
     debug     = False
     testing   = True
+    geocode   = GeocodingConfiguration()
     database  = PostgreSQLConfiguration()
 
 
