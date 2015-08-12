@@ -26,7 +26,10 @@ from dateutil.tz import tzutc
 from inigo.config import settings
 from inigo.utils.timez import epochptime
 from inigo.utils.decorators import memoized
-from inigo.models import Picture, Storage, create_session
+from inigo.exceptions import PictureNotFound
+from inigo.models import STYPE, create_session
+from inigo.models import Picture, Storage
+from inigo.utils.timez import tzaware_now
 
 from sqlalchemy.sql import exists
 
@@ -190,6 +193,51 @@ class ImageMeta(FileMeta):
 
             if commit:
                 session.commit()
+
+        return session
+
+    def save_storage(self, session=None, commit=False, **skwargs):
+        """
+        Saves the storage associated with this image and file meta.
+        """
+        session = session or create_session()
+
+        # Fetch the picture from the database
+        picture = session.query(Picture)
+        picture = picture.filter(Picture.signature == self.signature).first()
+
+        if not picture:
+            raise PictureNotFound(
+                "Must save the picture before assigning storages."
+            )
+
+        # Create the storage object
+        sdata = {
+            "stype": STYPE.ORIGINAL,
+            "hostname": unicode(self.hostname),
+            "filepath": unicode(self.path),
+            "memo": None,
+            "picture": picture,
+            "modified": tzaware_now(),
+        }
+        sdata.update(skwargs)
+
+        # Attempt to fetch the storage on the dependent keys
+        storage = session.query(Storage)
+        storage = storage.filter(Storage.stype == sdata['stype'])
+        storage = storage.filter(Storage.hostname == sdata['hostname'])
+        storage = storage.filter(Storage.filepath == sdata['filepath'])
+        storage = storage.filter(Storage.picture == sdata['picture'])
+        storage = storage.first() or Storage()
+
+        # Set the new values on the storage object
+        for key, val in sdata.iteritems():
+            setattr(storage, key, val)
+
+        session.add(storage)
+
+        if commit:
+            session.commit()
 
         return session
 

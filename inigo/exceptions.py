@@ -31,6 +31,12 @@ class NotAFile(InigoException):
     """
     pass
 
+class PictureNotFound(InigoException):
+    """
+    Could not get a picture from the database when it was required.
+    """
+    pass
+
 class ConsoleError(InigoException):
     """
     Captured on the command line for user feedback purposes

@@ -20,7 +20,10 @@ SQLAlchemy models for interacting with the database
 import os
 import mimetypes
 
+from collections import namedtuple
+
 from sqlalchemy import create_engine
+from sqlalchemy import Enum
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Unicode, UnicodeText
 from sqlalchemy import Integer, Float, DateTime
@@ -35,8 +38,12 @@ from inigo.utils.uname import hostname, username
 ## Module Constants
 ##########################################################################
 
-Base = declarative_base()  # SQLAlchemy declarative extension
-JPEG = "image/jpeg"
+Base  = declarative_base()  # SQLAlchemy declarative extension
+JPEG  = "image/jpeg"
+
+# Create a named tuple of storage types
+STYPE = ('ORIGINAL', 'BACKUP', 'CLOUD', 'DROBO')
+STYPE = namedtuple("Enum", STYPE)(*STYPE)
 
 ##########################################################################
 ## Models for Image Meta Data
@@ -52,10 +59,14 @@ class Storage(Base):
     __tablename__ = "storages"
 
     id            = Column(Integer, primary_key=True)
+    stype         = Column(Enum(*STYPE, name='STORAGE_TYPE'), default=STYPE.ORIGINAL)
     hostname      = Column(Unicode(255))
     filepath      = Column(Unicode(512), nullable=False)
+    memo          = Column(Unicode(255))
     picture_id    = Column(Integer, ForeignKey('pictures.id'), nullable=False)
     picture       = relationship('Picture', backref='storages')
+    created       = Column(DateTime(timezone=True), default=tzaware_now)
+    modified      = Column(DateTime(timezone=True), default=tzaware_now)
 
 
 class Picture(Base):
@@ -76,7 +87,7 @@ class Picture(Base):
     mimetype      = Column(Unicode(64))
     bytes         = Column(Integer)
     description   = Column(UnicodeText)
-
+    created       = Column(DateTime(timezone=True), default=tzaware_now)
 
     @property
     def extension(self):
