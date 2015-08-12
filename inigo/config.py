@@ -71,6 +71,7 @@ class InigoConfiguration(Configuration):
 
     debug     = False
     testing   = True
+    backupto  = None
     geocode   = GeocodingConfiguration()
     database  = PostgreSQLConfiguration()
 

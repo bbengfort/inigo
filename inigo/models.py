@@ -17,6 +17,9 @@ SQLAlchemy models for interacting with the database
 ## Imports
 ##########################################################################
 
+import os
+import mimetypes
+
 from sqlalchemy import create_engine
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Unicode, UnicodeText
@@ -33,6 +36,7 @@ from inigo.utils.uname import hostname, username
 ##########################################################################
 
 Base = declarative_base()  # SQLAlchemy declarative extension
+JPEG = "image/jpeg"
 
 ##########################################################################
 ## Models for Image Meta Data
@@ -72,6 +76,38 @@ class Picture(Base):
     mimetype      = Column(Unicode(64))
     bytes         = Column(Integer)
     description   = Column(UnicodeText)
+
+
+    @property
+    def extension(self):
+        """
+        Returns the extension of the picture, guessed from the mimetype.
+        """
+        if self.mimetype == JPEG:
+            return ".jpg"
+        return mimetypes.guess_extension(self.mimetype, strict=False)
+
+    def get_relative_backup_path(self):
+        """
+        Compute the backup path of the picture based on the date taken and
+        the primary key, relative to the root backup location on disk.
+
+        Should be of the following format:
+
+            yyyy/mm-mmmm/yyyy-mm-dd-pk.jpg
+
+        Note the extension is 'guessed' by the mimetypes library, but all
+        image/jpeg mimetypes are going to be transformed to .jpg.
+        """
+        fname = "{}-{:07d}{}".format(
+            self.date_taken.strftime("%Y-%m-%d"), self.id, self.extension
+        )
+
+        return os.path.join(
+            self.date_taken.strftime("%Y"),
+            self.date_taken.strftime("%m-%B"),
+            fname
+        )
 
 
 ##########################################################################
