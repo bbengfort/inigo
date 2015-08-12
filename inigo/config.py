@@ -18,9 +18,11 @@ Configuration for the Inigo utilities
 ##########################################################################
 
 import os
+import platform
 
 from confire import Configuration
 from confire import environ_setting
+from confire import ImproperlyConfigured
 
 ##########################################################################
 ## Base Paths
@@ -40,6 +42,42 @@ class PostgreSQLConfiguration(Configuration):
     user = environ_setting("PGUSER", "django")
     password = environ_setting("PGPASSWORD", "", required=False)
 
+    @property
+    def url(self):
+        """
+        Returns the SQLAlchemy connection URL
+        """
+        return "postgres://{user}:{pass}@{host}:{port}/{name}".format(**{
+            'host': self.host, 'port': self.port,
+            'name': self.name, 'user': self.user, 'pass': self.password
+        })
+
+
+class GeocodingConfiguration(Configuration):
+
+    apikey = environ_setting("GOOGLE_CLIENT_KEY", "")
+    call_limit = 2500
+    call_rate  = 5
+
+
+class DroboConfiguration(Configuration):
+
+    mount  = "/Volumes"
+    name   = "DroboCrate"
+    root   = "inigo"
+
+    def get_drobo_path(self):
+        """
+        Returns a full path to the Drobo volume.
+        """
+        drobo = os.path.join(self.mount, self.name)
+        if not os.path.exists(drobo):
+            raise ImproperlyConfigured(
+                "Could not find Drobo mounted at {!r}".format(drobo)
+            )
+
+        return os.path.join(drobo, self.root)
+
 ##########################################################################
 ## Application Configuration
 ##########################################################################
@@ -54,6 +92,8 @@ class InigoConfiguration(Configuration):
 
     debug     = False
     testing   = True
+    drobo     = DroboConfiguration()
+    geocode   = GeocodingConfiguration()
     database  = PostgreSQLConfiguration()
 
 

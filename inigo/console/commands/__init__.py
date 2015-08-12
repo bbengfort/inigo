@@ -20,3 +20,5 @@ A module containing all the Inigo commands
 ## Make sure all commands in this directory are imported!
 from .debug import DebugCommand
 from .discover import IdentifyTypesCommand
+from .backup import BackupCommand
+from .geocode import GeocodeCommand

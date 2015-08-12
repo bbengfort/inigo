@@ -1,20 +1,22 @@
+## Database
+psycopg2==2.6.1
+alembic==0.7.6
+SQLAlchemy==1.0.6
+Mako==1.0.1
+MarkupSafe==0.23
+
 ## Image management
 Pillow==2.6.1
 python-magic==0.4.6
+geopy==1.10.0
 
 ## Utilities
 confire==0.2.0
 colorama==0.3.3
-python-dateutil==2.3
+python-dateutil==2.4.2
 PyYAML==3.11
-six==1.8.0
+six==1.9.0
 
 ## Testing tools
 nose==1.3.4
 coverage==3.7.1
-#coveralls==0.5
-#docopt==0.6.2
-#requests==2.7.0
-
-## Added by virtualenv
-wsgiref==0.1.2

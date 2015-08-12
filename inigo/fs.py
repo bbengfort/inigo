@@ -20,9 +20,13 @@ Implements local file system operations
 import os
 import magic
 import base64
+import shutil
 import hashlib
 
+from urlparse import urljoin
 from inigo.exceptions import *
+from inigo.utils.decorators import memoized
+from inigo.utils.uname import hostname
 
 ##########################################################################
 ## Helper Methods
@@ -48,29 +52,107 @@ class Node(object):
     def __init__(self, path):
         self.path = normalize_path(path)
 
+    @property
+    def hostname(self):
+        """
+        Returns the hostname and access protocol of the node.
+        """
+        return "file://{}".format(hostname())
+
+    @property
+    def uri(self):
+        """
+        Returns the uniform resource identifier of the node.
+        """
+        return urljoin(self.hostname, self.path)
+
+    @property
+    def directory(self):
+        """
+        Returns the parent directory of the node.
+        """
+        return Directory(os.path.dirname(self.path))
+
     def stat(self):
         """
         Call os.stat on the path
         """
         return os.stat(self.path)
 
+    def copy(self, dst):
+        """
+        Copy this node from it's current location to the destination.
+        Returns a new Node for the destination object.
+        """
+        directory = os.path.dirname(dst)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        shutil.copy(self.path, dst)
+        shutil.copystat(self.path, dst)
+        return self.__class__(dst)
+
+    def move(self, dst):
+        """
+        Move this node from it's current location to the destination.
+        Returns a new Node for the destination object.
+        """
+        directory = os.path.dirname(dst)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        shutil.move(self.path, dst)
+        return self.__class__(dst)
+
+    def remove(self):
+        """
+        Deletes the path from disk.
+        """
+        os.remove(self.path)
+
+    def exists(self):
+        """
+        Check if the file exists on disk
+        """
+        return os.path.exists(self.path)
+
     def isfile(self):
         """
         Checks if this is a File
         """
-        return self.__class__.__name__ == 'FileMeta'
+        return os.path.isfile(self.path)
 
     def isdir(self):
         """
         Checks if this is a Directory
         """
-        return self.__class__.__name__ == 'Directory'
+        return os.path.isdir(self.path)
+
+    def isimage(self):
+        """
+        Checks if this is an Image
+        """
+        if self.isfile():
+            meta = FileMeta(self.path)
+            if meta.mimetype.startswith('image'):
+                return True
+        return False
+
+    def convert(self):
+        """
+        Converts the node into the appropriate subclass
+        """
+        if self.isdir():
+            return Directory(self.path)
+
+        if self.isfile():
+            return FileMeta(self.path)
 
     def __str__(self):
         return self.path
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self.path)
+        return "<%s: %s>" % (self.__class__.__name__, self.uri)
 
 ##########################################################################
 ## File
@@ -81,25 +163,42 @@ class FileMeta(Node):
     Implements a File object with extended functionality to gather meta data
     """
 
-    def __init__(self, path, signature='sha256'):
+    @classmethod
+    def touch(cls, path, times=None, **kwargs):
+        """
+        Creates an empty file at the specified path.
+        """
+        with open(path, 'a') as f:
+            os.utime(path, times)
 
-        if not os.path.isfile(path):
-            raise NotAFile("The specified path, '%s' is not a file", path)
+        return cls(path, **kwargs)
+
+    def __init__(self, path, signature='sha256'):
+        super(FileMeta, self).__init__(path)
+
+        if not os.path.isfile(self.path):
+            raise NotAFile("The specified path, '%s' is not a file", self.path)
 
         if signature not in hashlib.algorithms:
             raise TypeError('"%s" is not a valid hash algorithm', signature)
 
         self.sigalg = getattr(hashlib, signature)
-        super(FileMeta, self).__init__(path)
 
-    @property
+    @memoized
     def mimetype(self):
         """
         Uses libmagic to guess the mimetype of the file
         """
         return magic.from_file(self.path, mime=True)
 
-    @property
+    @memoized
+    def filesize(self):
+        """
+        Uses stat to return the size of the file in bytes.
+        """
+        return self.stat().st_size
+
+    @memoized
     def signature(self):
         """
         Computes the b64 encoded sha256 hash of the file
@@ -109,13 +208,7 @@ class FileMeta(Node):
             chk = sig.block_size * 256
             for chunk in iter(lambda: f.read(chk), b''):
                 sig.update(chunk)
-        return base64.b64encode(sig.digest())
-
-    def isfile(self):
-        """
-        Checks if this is a File
-        """
-        return True
+        return unicode(base64.b64encode(sig.digest()))
 
 ##########################################################################
 ## Directory
@@ -126,24 +219,28 @@ class Directory(Node):
     Implements a Directory object with extended functionality
     """
 
+    @classmethod
+    def create(cls, path, **kwargs):
+        """
+        Creates a directory along with all parent directories.
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return cls(path, **kwargs)
+
     def __init__(self, path, recursive=False, maxdepth=None):
         """
         Instantiate a directory with a path. Recursive means that listing
         the directory will walk the tree from the directory root.
         """
+        super(Directory, self).__init__(path)
 
-        if not os.path.isdir(path):
-            raise NotADirectory("The specified path, '%s' is not a directory", path)
+        if not os.path.isdir(self.path):
+            raise NotADirectory("The specified path, '%s' is not a directory", self.path)
 
         self.recursive = recursive
         self.maxdepth  = maxdepth
-        super(Directory, self).__init__(path)
 
-    def isdir(self):
-        """
-        Checks if this is a Directory
-        """
-        return True
 
     def list(self):
         """
@@ -172,3 +269,24 @@ class Directory(Node):
         for name, dirs, files in os.walk(self.path):
             depth = name.count(os.sep) - startdepth
             yield name, dirs, files, depth
+
+    def copy(self, dst):
+        """
+        Copy this node from it's current location to the destination.
+        Returns a new Node for the destination object.
+        """
+        shutil.copytree(self.path, dst)
+        return self.__class__(dst)
+
+    def remove(self, force=False):
+        """
+        Deletes the path from disk. If force is true, then uses rmtree.
+        """
+        if force:
+            shutil.rmtree(self.path)
+            return
+
+        os.rmdir(self.path)
+
+    def __len__(self):
+        return len(list(self.list()))
