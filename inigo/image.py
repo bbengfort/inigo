@@ -183,8 +183,8 @@ class ImageMeta(FileMeta):
             session.add(Picture(
                 signature     = self.signature,
                 date_taken    = self.date_taken,
-                latitude      = self.coordinates[0],
-                longitude     = self.coordinates[1],
+                latitude      = self.coordinates[0] if self.coordinates else None,
+                longitude     = self.coordinates[1] if self.coordinates else None,
                 width         = self.dimensions[0],
                 height        = self.dimensions[1],
                 mimetype      = unicode(self.mimetype),
