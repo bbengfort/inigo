@@ -68,8 +68,9 @@ class BackupCommand(Command):
 
         # If node is a single file, handle it and move on
         if node.isimage():
-            self.backup_image(node.convert(), session)
-            return 1
+            result = self.backup_image(node.convert(), session)
+            duplicate = 1 if result is None else 0
+            return 1, duplicate, 0
 
         # Walk directory at recursion and depth
         count  = 0
@@ -77,19 +78,19 @@ class BackupCommand(Command):
         duplicates = 0
         folder = Directory(path, recursive, depth)
         for idx, item in enumerate(folder.list()):
-            if item.isimage():
-                count += 1
-                try:
+            try:
+                if item.isimage():
+                    count += 1
                     result = self.backup_image(item, session)
                     if not result:
                         duplicates += 1
-                except Exception as e:
-                    print color_format(
-                        "Exception at {}: {}",
-                        colorama.Style.BRIGHT + colorama.Fore.RED,
-                        item.path, e
-                    )
-                    errors += 1
+            except Exception as e:
+                print color_format(
+                    "Exception at {}: {}",
+                    colorama.Style.BRIGHT + colorama.Fore.RED,
+                    item.path, e
+                )
+                errors += 1
 
             if idx % 1000 == 0:
                 session.commit()
